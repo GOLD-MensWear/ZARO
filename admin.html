@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ZARO — Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#0a0a0a;color:#f4f4f4;font-family:Inter,Arial,sans-serif}
+body{min-height:100vh}.hidden{display:none!important}.app{max-width:1400px;margin:auto;padding:22px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}
+.brand{font-size:28px;letter-spacing:.16em;font-weight:800}.brand small{display:block;font-size:9px;letter-spacing:.3em;color:#777;margin-top:4px}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.btn{border:1px solid #333;background:#171717;color:#fff;padding:12px 16px;border-radius:12px}.btn.primary{background:#fff;color:#080808;border-color:#fff}.btn.danger{border-color:#6d2727;color:#ff9b9b}.btn:disabled{opacity:.45;cursor:not-allowed}
+.login{min-height:100vh;display:grid;place-items:center;padding:20px}.login-box{width:min(430px,100%);background:#111;border:1px solid #262626;border-radius:24px;padding:30px;box-shadow:0 30px 80px #000}
+h1,h2,h3{margin:0 0 12px}.muted{color:#888;font-size:13px;line-height:1.6}.field{display:grid;gap:7px;margin:13px 0}.field label{font-size:11px;color:#999;text-transform:uppercase;letter-spacing:.1em}.field input,.field textarea,.field select{width:100%;background:#090909;border:1px solid #2c2c2c;color:#fff;border-radius:10px;padding:12px;outline:none}.field textarea{min-height:90px;resize:vertical}
+.tabs{display:flex;gap:8px;overflow:auto;border-bottom:1px solid #222;margin-bottom:20px}.tab{border:0;background:transparent;color:#888;padding:13px 16px;white-space:nowrap}.tab.active{color:#fff;border-bottom:2px solid #fff}
+.panel{background:#101010;border:1px solid #242424;border-radius:18px;padding:18px;margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.stat{padding:18px;background:#151515;border:1px solid #242424;border-radius:14px}.stat b{font-size:28px;display:block}.stat span{color:#777;font-size:11px}
+.toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:15px;flex-wrap:wrap}.search{max-width:360px;width:100%}.products{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.product{background:#141414;border:1px solid #272727;border-radius:16px;overflow:hidden}.product img,.photo-empty{width:100%;aspect-ratio:1/1;object-fit:cover;background:#0b0b0b}.photo-empty{display:grid;place-items:center;color:#444;font-size:40px}.pbody{padding:14px}.pname{font-weight:700}.pmeta{color:#777;font-size:12px;margin:5px 0 10px}.prow{display:flex;justify-content:space-between;gap:10px;align-items:center}.price{font-weight:800}.badge{font-size:10px;padding:5px 8px;border-radius:999px;background:#222;color:#aaa}.badge.on{background:#e8e8e8;color:#111}.actions{display:flex;gap:8px;margin-top:12px}.actions .btn{flex:1;padding:9px}
+.tablewrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:700px}.table th,.table td{padding:13px;border-bottom:1px solid #242424;text-align:left;font-size:13px}.table th{color:#777;font-size:10px;text-transform:uppercase}.status{padding:6px 9px;border-radius:999px;background:#222;font-size:10px}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal.open{display:flex}.modalbox{background:#111;border:1px solid #303030;border-radius:20px;width:min(650px,100%);max-height:92vh;overflow:auto;padding:22px}.modalhead{display:flex;justify-content:space-between;gap:10px;align-items:center}.close{border:0;background:#222;color:#fff;width:38px;height:38px;border-radius:50%;font-size:22px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}.upload{border:1px dashed #444;border-radius:12px;padding:15px;text-align:center;color:#777}.preview{width:100%;max-height:240px;object-fit:contain;background:#080808;border-radius:12px;margin-top:10px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,20px);opacity:0;background:#fff;color:#000;padding:12px 18px;border-radius:999px;z-index:100;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.products{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.app{padding:14px}.grid,.products,.formgrid{grid-template-columns:1fr}.top{align-items:flex-start}.brand{font-size:22px}.toolbar{align-items:stretch}.search{max-width:none}}
+
+.bulk-card{background:#141414;border:1px solid #272727;border-radius:14px;overflow:hidden}
+.bulk-card img{width:100%;aspect-ratio:1/1;object-fit:cover;background:#0b0b0b}
+.bulk-card .bcbody{padding:9px}
+.bulk-card .bcname{font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bulk-card .bcmeta{color:#777;font-size:10px;margin-top:4px}
+.bulk-progress{height:8px;background:#222;border-radius:999px;overflow:hidden;margin-top:10px}
+.bulk-progress i{display:block;height:100%;width:0;background:#fff;transition:width .2s}
+@media(max-width:600px){#bulkGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+</style>
+</head>
+<body>
+<div id="loginView" class="login">
+  <div class="login-box">
+    <div class="brand">ZARO<small>ADMIN PANEL</small></div>
+    <p class="muted">Sign in with the admin account created in Supabase Authentication.</p>
+    <form id="loginForm">
+      <div class="field"><label>Email</label><input id="email" type="email" required autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="password" type="password" required autocomplete="current-password"></div>
+      <button class="btn primary" style="width:100%">SIGN IN</button>
+    </form>
+    <p id="loginError" class="muted"></p>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <div class="top">
+    <div class="brand">ZARO<small>CONTROL CENTER</small></div>
+    <div style="display:flex;gap:8px"><a class="btn" href="index.html">VIEW STORE</a><button class="btn" id="logout">LOG OUT</button></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="products">Products</button>
+    <button class="tab" data-tab="orders">Orders</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </div>
+
+  <section id="dashboardTab">
+    <div class="grid">
+      <div class="stat"><b id="statProducts">0</b><span>ACTIVE PRODUCTS</span></div>
+      <div class="stat"><b id="statOut">0</b><span>OUT OF STOCK</span></div>
+      <div class="stat"><b id="statOrders">0</b><span>ORDERS</span></div>
+      <div class="stat"><b id="statValue">0</b><span>CATALOG VALUE</span></div>
+    </div>
+    <div class="panel" style="margin-top:14px"><h3>How it works</h3><p class="muted">Add a product here, upload its photo, set price/stock/sizes, and publish it. The public ZARO site reads active products from Supabase automatically.</p></div>
+  </section>
+
+  <section id="productsTab" class="hidden">
+    <div class="toolbar"><div><h2>Products</h2><div class="muted">Create, edit, hide, delete and reorder your collection.</div></div><div style="display:flex;gap:8px"><input class="field search" id="productSearch" placeholder="Search products..." style="margin:0"><button class="btn" id="bulkUpload">+ BULK UPLOAD</button><button class="btn primary" id="addProduct">+ ADD PRODUCT</button></div></div>
+    <div id="productsGrid" class="products"></div>
+  </section>
+
+  <section id="ordersTab" class="hidden">
+    <div class="panel"><div class="toolbar"><div><h2>Orders</h2><div class="muted">Orders stored by the site appear here.</div></div><button class="btn" id="refreshOrders">REFRESH</button></div><div class="tablewrap"><table class="table"><thead><tr><th>Date</th><th>Customer</th><th>Phone</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody id="ordersBody"></tbody></table></div></div>
+  </section>
+
+  <section id="settingsTab" class="hidden">
+    <div class="panel"><h2>Store Settings</h2><p class="muted">These values are saved in Supabase.</p>
+      <form id="settingsForm">
+        <div class="formgrid">
+          <div class="field"><label>Brand name</label><input id="setBrand" required></div>
+          <div class="field"><label>WhatsApp number</label><input id="setWhatsApp" placeholder="201xxxxxxxxx" required></div>
+          <div class="field"><label>Delivery fee (EGP)</label><input id="setDelivery" type="number" min="0" required></div>
+          <div class="field"><label>Announcement</label><input id="setAnnouncement"></div>
+          <div class="field full"><label>Hero title</label><input id="setHero"></div>
+        </div>
+        <button class="btn primary">SAVE SETTINGS</button>
+      </form>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="productModal">
+ <div class="modalbox">
+  <div class="modalhead"><div><h2 id="modalTitle">Add Product</h2><div class="muted">Product details</div></div><button class="close" id="closeModal">×</button></div>
+  <form id="productForm">
+   <input type="hidden" id="productId">
+   <div class="formgrid">
+    <div class="field"><label>English name</label><input id="pName" required></div>
+    <div class="field"><label>Arabic name</label><input id="pAr"></div>
+    <div class="field"><label>Category</label><select id="pCat"><option>T-Shirts</option><option>Shirts</option><option>Pants</option><option>Jackets</option><option>Hoodies</option><option>Accessories</option></select></div>
+    <div class="field"><label>Price EGP</label><input id="pPrice" type="number" min="0" required></div>
+    <div class="field"><label>Stock</label><input id="pStock" type="number" min="0" value="0"></div>
+    <div class="field"><label>Sizes (comma separated)</label><input id="pSizes" placeholder="S, M, L, XL"></div>
+    <div class="field full"><label>Product photo</label><div class="upload"><input id="pImage" type="file" accept="image/*"><div id="uploadText">Choose a photo or leave empty when editing.</div><img id="preview" class="preview hidden"></div></div>
+    <div class="field full"><label>Publish</label><select id="pActive"><option value="true">Published — visible on website</option><option value="false">Hidden — not visible</option></select></div>
+   </div>
+   <div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn" id="cancelProduct">CANCEL</button><button class="btn primary">SAVE PRODUCT</button></div>
+  </form>
+ </div>
+</div>
+
+<div class="modal" id="bulkModal">
+ <div class="modalbox" style="width:min(1000px,100%)">
+  <div class="modalhead">
+   <div><h2>Bulk Product Upload</h2><div class="muted">Choose many photos, set one price, and create products automatically.</div></div>
+   <button class="close" id="closeBulk">×</button>
+  </div>
+
+  <div class="panel" style="margin:15px 0">
+   <div class="formgrid">
+    <div class="field">
+     <label>Product type</label>
+     <select id="bulkCat">
+      <option value="T-Shirts">T-Shirts</option><option value="Shirts">Shirts</option>
+      <option value="Pants">Pants</option><option value="Jackets">Jackets</option>
+      <option value="Hoodies">Hoodies</option><option value="Accessories">Accessories</option>
+     </select>
+    </div>
+    <div class="field">
+     <label>Price EGP</label>
+     <input id="bulkPrice" type="number" min="0" placeholder="350" required>
+    </div>
+    <div class="field">
+     <label>Stock per product</label>
+     <input id="bulkStock" type="number" min="0" value="1">
+    </div>
+    <div class="field">
+     <label>Sizes</label>
+     <input id="bulkSizes" placeholder="S, M, L, XL">
+    </div>
+   </div>
+   <div class="upload">
+    <input id="bulkImages" type="file" accept="image/*" multiple>
+    <div style="margin-top:8px">Select all product photos at once</div>
+   </div>
+  </div>
+
+  <div id="bulkSummary" class="muted" style="margin:10px 0"></div>
+  <div id="bulkGrid" class="products" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
+   <button type="button" class="btn" id="cancelBulk">CANCEL</button>
+   <button type="button" class="btn primary" id="createBulk">CREATE ALL PRODUCTS</button>
+  </div>
+ </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const cfg=window.ZARO_SUPABASE||{};
+let db=null, products=[], orders=[];
+const $=id=>document.getElementById(id);
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(window.__zt);window.__zt=setTimeout(()=>t.classList.remove("show"),1800)}
+function configured(){return cfg.url&&cfg.anonKey&&!cfg.url.includes("YOUR_")&&!cfg.anonKey.includes("YOUR_")}
+function requireDb(){if(!db){toast("Add Supabase config first");return false}return true}
+
+async function boot(){
+ if(!configured()){ $("loginError").textContent="Open supabase-config.js and add your Supabase Project URL + anon/publishable key."; return; }
+ db=window.supabase.createClient(cfg.url,cfg.anonKey);
+ const {data:{session}}=await db.auth.getSession();
+ if(session) showApp(); else $("loginView").classList.remove("hidden");
+ db.auth.onAuthStateChange((_e,s)=>s?showApp():showLogin());
+}
+function showLogin(){$("app").classList.add("hidden");$("loginView").classList.remove("hidden")}
+async function showApp(){$("loginView").classList.add("hidden");$("app").classList.remove("hidden");await Promise.all([loadProducts(),loadOrders(),loadSettings()]);updateStats()}
+
+$("loginForm").onsubmit=async e=>{
+ e.preventDefault(); if(!requireDb())return;
+ $("loginError").textContent="";
+ const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+ if(error)$("loginError").textContent=error.message;
+}
+$("logout").onclick=()=>db.auth.signOut();
+
+document.querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>{
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
+ ["dashboard","products","orders","settings"].forEach(t=>$(t+"Tab").classList.toggle("hidden",t!==btn.dataset.tab));
+ if(btn.dataset.tab==="orders")loadOrders();
+ if(btn.dataset.tab==="products")renderProducts();
+});
+
+async function loadProducts(){
+ const {data,error}=await db.from("products").select("*").order("sort_order",{ascending:true}).order("created_at",{ascending:false});
+ if(error){toast(error.message);return} products=data||[];renderProducts();updateStats();
+}
+function renderProducts(){
+ const q=($("productSearch").value||"").toLowerCase().trim();
+ const list=products.filter(p=>[p.name,p.ar,p.cat].join(" ").toLowerCase().includes(q));
+ $("productsGrid").innerHTML=list.map(p=>`
+ <article class="product">
+  ${p.image?`<img src="${escapeAttr(p.image)}" alt="">`:`<div class="photo-empty">Z</div>`}
+  <div class="pbody">
+   <div class="prow"><div class="pname">${escapeHtml(p.name)}</div><span class="badge ${p.active?'on':''}">${p.active?'LIVE':'HIDDEN'}</span></div>
+   <div class="pmeta">${escapeHtml(p.cat)} · Stock ${Number(p.stock)||0} · ${(Array.isArray(p.sizes)?p.sizes:[]).join(", ")||"No sizes"}</div>
+   <div class="prow"><span class="price">${Number(p.price||0).toLocaleString("en-US")} EGP</span><span class="badge">${escapeHtml(p.ar||"")}</span></div>
+   <div class="actions"><button class="btn" onclick="editProduct(${p.id})">EDIT</button><button class="btn" onclick="toggleProduct(${p.id})">${p.active?'HIDE':'PUBLISH'}</button><button class="btn danger" onclick="deleteProduct(${p.id})">DELETE</button></div>
+  </div>
+ </article>`).join("")||`<div class="panel" style="grid-column:1/-1"><div class="muted">No products found.</div></div>`;
+}
+$("productSearch").oninput=renderProducts;
+
+function openProductModal(p=null){
+ $("productId").value=p?.id||"";
+ $("modalTitle").textContent=p?"Edit Product":"Add Product";
+ $("pName").value=p?.name||"";$("pAr").value=p?.ar||"";$("pCat").value=p?.cat||"T-Shirts";
+ $("pPrice").value=p?.price??"";$("pStock").value=p?.stock??0;$("pSizes").value=(p?.sizes||[]).join(", ");
+ $("pActive").value=String(p?.active!==false);$("pImage").value="";$("preview").classList.add("hidden");
+ if(p?.image){$("preview").src=p.image;$("preview").classList.remove("hidden")}
+ $("productModal").classList.add("open");
+}
+$("addProduct").onclick=()=>openProductModal();
+$("closeModal").onclick=$("cancelProduct").onclick=()=>$("productModal").classList.remove("open");
+$("pImage").onchange=()=>{const f=$("pImage").files[0];if(f){$("preview").src=URL.createObjectURL(f);$("preview").classList.remove("hidden");$("uploadText").textContent=f.name}};
+
+async function uploadImage(file){
+ if(!file)return null;
+ const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
+ const path=`${Date.now()}-${crypto.randomUUID()}.${ext||"jpg"}`;
+ const {error}=await db.storage.from("zaro-products").upload(path,file,{upsert:false,contentType:file.type||"image/jpeg"});
+ if(error)throw error;
+ const {data}=db.storage.from("zaro-products").getPublicUrl(path);
+ return data.publicUrl;
+}
+$("productForm").onsubmit=async e=>{
+ e.preventDefault(); if(!requireDb())return;
+ const id=$("productId").value;
+ const existing=id?products.find(p=>String(p.id)===String(id)):null;
+ try{
+  let image=existing?.image||"";
+  const file=$("pImage").files[0]; if(file) image=await uploadImage(file);
+  const payload={
+   name:$("pName").value.trim(),ar:$("pAr").value.trim(),cat:$("pCat").value,
+   price:Number($("pPrice").value)||0,stock:Number($("pStock").value)||0,
+   sizes:$("pSizes").value.split(",").map(x=>x.trim()).filter(Boolean),
+   image,active:$("pActive").value==="true",sort_order:existing?.sort_order||0
+  };
+  let res;
+  if(id) res=await db.from("products").update(payload).eq("id",id);
+  else res=await db.from("products").insert(payload);
+  if(res.error)throw res.error;
+  $("productModal").classList.remove("open");toast("Product saved");await loadProducts();
+ }catch(err){toast(err.message)}
+}
+window.editProduct=id=>openProductModal(products.find(p=>String(p.id)===String(id)));
+window.toggleProduct=async id=>{
+ const p=products.find(x=>x.id===id);if(!p)return;
+ const {error}=await db.from("products").update({active:!p.active}).eq("id",id);
+ if(error)toast(error.message);else{toast(p.active?"Product hidden":"Product published");loadProducts()}
+}
+window.deleteProduct=async id=>{
+ const p=products.find(x=>x.id===id);if(!p)return;
+ if(!confirm(`Delete "${p.name}"?`))return;
+ const {error}=await db.from("products").delete().eq("id",id);
+ if(error)toast(error.message);else{toast("Product deleted");loadProducts()}
+}
+
+async function loadOrders(){
+ const {data,error}=await db.from("orders").select("*").order("created_at",{ascending:false});
+ if(error){toast(error.message);return}orders=data||[];$("statOrders").textContent=orders.length;
+ $("ordersBody").innerHTML=orders.map(o=>`<tr><td>${new Date(o.created_at).toLocaleString()}</td><td>${escapeHtml(o.customer_name)}</td><td>${escapeHtml(o.phone)}</td><td>${Number(o.total||0).toLocaleString("en-US")} EGP</td><td><select onchange="setOrderStatus('${o.id}',this.value)"><option ${o.status==="new"?"selected":""}>new</option><option ${o.status==="processing"?"selected":""}>processing</option><option ${o.status==="shipped"?"selected":""}>shipped</option><option ${o.status==="completed"?"selected":""}>completed</option><option ${o.status==="cancelled"?"selected":""}>cancelled</option></select></td><td><button class="btn" onclick="viewOrder('${o.id}')">VIEW</button></td></tr>`).join("")||`<tr><td colspan="6" class="muted">No orders yet.</td></tr>`;
+}
+$("refreshOrders").onclick=loadOrders;
+window.setOrderStatus=async(id,status)=>{const {error}=await db.from("orders").update({status}).eq("id",id);if(error)toast(error.message);else toast("Status updated")};
+window.viewOrder=id=>{const o=orders.find(x=>x.id===id);if(!o)return;alert(`Customer: ${o.customer_name}\nPhone: ${o.phone}\nAddress: ${o.address}\n\nItems:\n${JSON.stringify(o.items,null,2)}\n\nTotal: ${o.total} EGP`)};
+
+async function loadSettings(){
+ const {data,error}=await db.from("site_settings").select("*").eq("id",1).maybeSingle();
+ if(error||!data)return;
+ $("setBrand").value=data.brand_name||"ZARO";$("setWhatsApp").value=data.whatsapp||"";
+ $("setDelivery").value=data.delivery_fee??10;$("setAnnouncement").value=data.announcement||"";$("setHero").value=data.hero_title||"";
+}
+$("settingsForm").onsubmit=async e=>{
+ e.preventDefault();
+ const payload={brand_name:$("setBrand").value.trim(),whatsapp:$("setWhatsApp").value.trim(),delivery_fee:Number($("setDelivery").value)||0,announcement:$("setAnnouncement").value.trim(),hero_title:$("setHero").value.trim(),updated_at:new Date().toISOString()};
+ const {error}=await db.from("site_settings").upsert({...payload,id:1});
+ if(error)toast(error.message);else toast("Settings saved");
+}
+function updateStats(){
+ $("statProducts").textContent=products.filter(p=>p.active).length;
+ $("statOut").textContent=products.filter(p=>Number(p.stock)<=0).length;
+ $("statValue").textContent=products.reduce((s,p)=>s+(Number(p.price)||0)*(Number(p.stock)||0),0).toLocaleString("en-US")+" EGP";
+}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function escapeAttr(s){return escapeHtml(s)}
+
+/* ---------- BULK UPLOAD ---------- */
+let bulkFiles=[];
+
+function autoProductName(cat,index,file){
+  const n=(file?.name||"").replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").trim();
+  const clean=n.replace(/\b(img|image|photo|dsc|pxl|whatsapp|screenshot)\b/gi,"").replace(/\s+/g," ").trim();
+  const catName={
+    "T-Shirts":"T-Shirt","Shirts":"Shirt","Pants":"Pants",
+    "Jackets":"Jacket","Hoodies":"Hoodie","Accessories":"Accessory"
+  }[cat]||cat;
+  return clean ? `${catName} — ${clean}` : `${catName} ${String(index+1).padStart(3,"0")}`;
+}
+
+function renderBulkPreview(){
+  const cat=$("bulkCat").value;
+  $("bulkSummary").textContent=`${bulkFiles.length} photo${bulkFiles.length===1?"":"s"} selected`;
+  $("bulkGrid").innerHTML=bulkFiles.map((f,i)=>{
+    const url=URL.createObjectURL(f);
+    const name=autoProductName(cat,i,f);
+    return `<article class="bulk-card">
+      <img src="${escapeAttr(url)}" alt="">
+      <div class="bcbody"><div class="bcname">${escapeHtml(name)}</div><div class="bcmeta">${escapeHtml(f.name)}</div></div>
+    </article>`;
+  }).join("");
+}
+
+$("bulkUpload").onclick=()=>{
+  bulkFiles=[];$("bulkImages").value="";$("bulkGrid").innerHTML="";$("bulkSummary").textContent="";
+  $("bulkModal").classList.add("open");
+};
+$("closeBulk").onclick=$("cancelBulk").onclick=()=>$("bulkModal").classList.remove("open");
+$("bulkImages").onchange=e=>{bulkFiles=[...e.target.files];renderBulkPreview()};
+$("bulkCat").onchange=()=>{if(bulkFiles.length)renderBulkPreview()};
+
+async function createBulkProducts(){
+  if(!requireDb())return;
+  if(!bulkFiles.length){toast("Choose product photos first");return}
+  const price=Number($("bulkPrice").value);
+  if(!Number.isFinite(price)||price<0){toast("Enter a valid price");return}
+
+  const cat=$("bulkCat").value;
+  const stock=Number($("bulkStock").value)||0;
+  const sizes=$("bulkSizes").value.split(",").map(x=>x.trim()).filter(Boolean);
+  const btn=$("createBulk");
+  btn.disabled=true;
+  let done=0, failed=0;
+
+  for(let i=0;i<bulkFiles.length;i++){
+    try{
+      const file=bulkFiles[i];
+      const image=await uploadImage(file);
+      const name=autoProductName(cat,i,file);
+      const payload={
+        name,
+        ar:"",
+        cat,
+        price,
+        stock,
+        sizes,
+        image,
+        active:true,
+        sort_order:0
+      };
+      const {error}=await db.from("products").insert(payload);
+      if(error)throw error;
+    }catch(err){
+      console.error(err);failed++;
+    }
+    done++;
+    btn.textContent=`UPLOADING ${done}/${bulkFiles.length}`;
+  }
+
+  btn.disabled=false;btn.textContent="CREATE ALL PRODUCTS";
+  if(failed){
+    toast(`${done-failed} created · ${failed} failed`);
+  }else{
+    toast(`${done} products created successfully`);
+  }
+  $("bulkModal").classList.remove("open");
+  await loadProducts();
+}
+$("createBulk").onclick=createBulkProducts;
+/* ---------- END BULK UPLOAD ---------- */
+
+boot();
+</script>
+</body>
+</html>
